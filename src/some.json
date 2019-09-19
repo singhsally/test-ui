@@ -1,0 +1,226 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "description": "Demo",
+    "version": "v1",
+    "title": "Demo-Application"
+  },
+  "host": "localhost:8080",
+  "tags": [
+    {
+      "name": "Controller",
+      "description": "REST Apis related to Book inventory!!!!"
+    }
+  ],
+  "schemes": ["https"],
+  "paths": {
+    "/Books/addBook": {
+      "post": {
+        "tags": ["Controller"],
+        "summary": "Add a book",
+        "description": "",
+        "operationId": "addBook",
+        "consumes": ["application/json"],
+        "produces": ["application/json"],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": false,
+            "schema": {
+              "$ref": "#/definitions/AddBookRequestDocument"
+            }
+          },
+          {
+            "in": "body",
+            "name": "Name",
+            "required": false,
+            "schema": {
+              "$ref": "#/definitions/AddBookRequestDocument"
+            }
+          },
+          {
+            "in": "body",
+            "name": "Age",
+            "required": false,
+            "schema": {
+              "$ref": "#/definitions/AddBookRequestDocument"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Suceess|OK",
+            "schema": {
+              "$ref": "#/definitions/AddBookResponseDocument"
+            }
+          },
+          "401": {
+            "description": "not authorized!"
+          },
+          "403": {
+            "description": "forbidden!!!"
+          },
+          "404": {
+            "description": "not found!!!"
+          }
+        }
+      }
+    },
+    "/Books/deleteBook/{id}": {
+      "delete": {
+        "tags": ["Controller"],
+        "summary": "Delete a book",
+        "description": "",
+        "operationId": "deleteBook",
+        "consumes": ["application/json"],
+        "produces": ["application/json"],
+        "parameters": [
+          {
+            "name": "",
+            "in": "query",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Suceess|OK",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "401": {
+            "description": "not authorized!"
+          },
+          "403": {
+            "description": "forbidden!!!"
+          },
+          "404": {
+            "description": "not found!!!"
+          }
+        }
+      }
+    },
+    "/Books/getBook": {
+      "get": {
+        "tags": ["Controller"],
+        "summary": "Get a book",
+        "description": "",
+        "operationId": "getBook",
+        "consumes": ["application/json"],
+        "produces": ["application/json"],
+        "parameters": [
+          {
+            "name": "",
+            "in": "query",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Suceess|OK",
+            "schema": {
+              "$ref": "#/definitions/GetBookResponseDocument"
+            }
+          },
+          "401": {
+            "description": "not authorized!"
+          },
+          "403": {
+            "description": "forbidden!!!"
+          },
+          "404": {
+            "description": "not found!!!"
+          }
+        }
+      }
+    },
+    "/Books/updateBook": {
+      "patch": {
+        "tags": ["Controller"],
+        "summary": "Update book details",
+        "description": "",
+        "operationId": "UpdateBookData",
+        "consumes": ["application/json"],
+        "produces": ["application/json"],
+        "responses": {
+          "200": {
+            "description": "Suceess|OK",
+            "schema": {
+              "$ref": "#/definitions/UpdateBookResponseDocument"
+            }
+          },
+          "401": {
+            "description": "not authorized!"
+          },
+          "403": {
+            "description": "forbidden!!!"
+          },
+          "404": {
+            "description": "not found!!!"
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "AddBookRequestDocument": {
+      "type": "object",
+      "required": ["book"],
+      "properties": {
+        "book": {
+          "$ref": "#/definitions/Book"
+        }
+      }
+    },
+    "AddBookResponseDocument": {
+      "type": "object",
+      "required": ["bookName"],
+      "properties": {
+        "bookId": {
+          "type": "string"
+        },
+        "bookName": {
+          "type": "string"
+        },
+        "addingDate": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "result": {
+          "type": "boolean"
+        }
+      }
+    },
+    "Book": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": {
+          "type": "number",
+          "description": "test name"
+        }
+      }
+    },
+    "GetBookResponseDocument": {
+      "type": "object",
+      "required": ["bookId", "bookName"],
+      "properties": {
+        "bookId": {
+          "type": "string"
+        },
+        "bookName": {
+          "type": "string"
+        },
+        "author": {
+          "type": "string"
+        }
+      }
+    },
+    "UpdateBookResponseDocument": {
+      "type": "object"
+    }
+  }
+}
