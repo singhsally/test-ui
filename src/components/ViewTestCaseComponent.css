@@ -1,0 +1,8 @@
+.testCase {
+  margin: 1em;
+  display: flex;
+  height: 2em;
+  border: 2em;
+  background-color: white;
+  color: Black;
+}
