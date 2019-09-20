@@ -38,6 +38,8 @@ export class NewTestCaseComponent extends Component {
                               <SaveTestCaseComponent
                                 parameter={JSON.stringify(method[x].parameters)}
                                 swagger={JSON.stringify(response)}
+                                httpMethod={x}
+                                path={e}
                               ></SaveTestCaseComponent>
                             </div>
                           </Card.Body>

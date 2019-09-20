@@ -1,10 +1,16 @@
 import React, { Component } from "react";
 import { FormControl, Form, Button } from "react-bootstrap";
 import { element } from "prop-types";
+import { populateJSON } from "../util";
+import "./SaveComponent.css";
 
 export class SaveTestCaseComponent extends Component {
   state = {
-    request: {}
+    fields: {},
+    testCaseName: "",
+    status: "",
+    apiName: "",
+    buttonStatus: "disabled"
   };
   render() {
     const parameter = this.props.parameter
@@ -12,24 +18,71 @@ export class SaveTestCaseComponent extends Component {
       : null;
     const formParam = this.getFirstDocument(parameter)[0];
     const request = this.getFirstDocument(parameter)[1];
-    // return <h1>Sally Singh</h1>;
     return (
       <Form>
-        {formParam.map(element => {
+        <FormControl
+          id="Test Case Name"
+          placeholder="Test Case Name"
+          className="ramltextbox"
+          onChange={event => this.setTestCaseName(event.target.value)}
+        />
+        <FormControl
+          id="ApiName"
+          placeholder="Api Name"
+          className="ramltextbox"
+          onChange={event => this.setApiName(event.target.value)}
+        />
+        {formParam.map((element, i) => {
           return (
             <FormControl
               id={element}
               placeholder={element}
               className="ramltextbox"
+              onChange={event => this.setField(event.target.value, element)}
             />
           );
         })}
-        <Button onClick={this.sendData}>Save</Button>
+
+        <FormControl
+          id="Expected Result"
+          placeholder="Expected Result"
+          className="ramltextbox"
+          onChange={event => this.setStatus(event.target.value)}
+        />
+        <div>
+          <Button
+            onClick={() => this.sendData(JSON.parse(request))}
+            className="button"
+          >
+            Save
+          </Button>
+          <Button disabled className="button">
+            Run
+          </Button>
+        </div>
       </Form>
     );
   }
-  sendData = () => {
-    console.log("Button Clicked");
+  setField(value, element) {
+    const fields = this.state.fields;
+    fields[element] = value;
+    this.setState({ fields });
+  }
+  setApiName(apiName) {
+    this.setState({ apiName });
+  }
+  setTestCaseName(testCaseName) {
+    this.setState({ testCaseName });
+  }
+  setStatus(status) {
+    this.setState({ status });
+  }
+  sendData = request => {
+    request = populateJSON(request, this.state.fields);
+    request = JSON.stringify(request);
+    request = request.replace('"', "&#47;");
+    console.log("New Request", request);
+    console.log(this.createRequest(request));
   };
   getFirstDocument(parameters) {
     var req = "{";
@@ -51,15 +104,17 @@ export class SaveTestCaseComponent extends Component {
     }
     // console.log("doc", doc);
     if (!doc) {
-      req = req + "Something" + '":';
+      req = req + '"Something' + '":""}';
       array.push("Something");
     } else {
       console.log("This Request", req);
       array = array.concat(this.recursiveFunction(doc, req)[0]);
       req = this.recursiveFunction(doc, req)[1];
+      req = req.slice(0, -1);
+      req = req + "}";
     }
     console.log("Array", array);
-    console.log("Request Created", req.slice(0, -1) + "}");
+    console.log("Request Created", req);
     let res = [];
     if (array.length != 0) res.push(array);
     res.push(req);
@@ -109,5 +164,18 @@ export class SaveTestCaseComponent extends Component {
     if (array.length != 0) res.push(array);
     res.push(req);
     return res;
+  }
+  createRequest(requestBody) {
+    let request = {};
+    request["TestCaseName"] = this.state.testCaseName;
+    request["httpMethod"] = this.props.httpMethod;
+    request["baseUrl"] = JSON.parse(this.props.swagger).host;
+    request["path"] = this.props.path;
+    request["apiRequest"] = requestBody;
+    request["expectedResult"] = this.state.status;
+    request["header"] = JSON.parse(this.props.swagger).header
+      ? JSON.parse(this.props.swagger).header
+      : null;
+    return request;
   }
 }

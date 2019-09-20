@@ -1,0 +1,423 @@
+From 4dab78fd0467a3b84f0d5ec95a103013c48e8fc0 Mon Sep 17 00:00:00 2001
+From: singhsally <singhs3@rknec.edu>
+Date: Fri, 20 Sep 2019 01:27:20 +0530
+Subject: [PATCH] Modification
+
+---
+ src/components/NewTestCaseComponent.jsx  |  13 +-
+ src/components/SaveTestCaseComponent.jsx | 120 ++++++++++--
+ src/some.json                            | 226 +++++++++++++++++++++++
+ 3 files changed, 341 insertions(+), 18 deletions(-)
+ create mode 100644 src/some.json
+
+diff --git a/src/components/NewTestCaseComponent.jsx b/src/components/NewTestCaseComponent.jsx
+index a003cec..d673a8b 100644
+--- a/src/components/NewTestCaseComponent.jsx
++++ b/src/components/NewTestCaseComponent.jsx
+@@ -9,6 +9,7 @@ export class NewTestCaseComponent extends Component {
+       ? JSON.parse(this.props.responseFromRaml)
+       : null;
+     console.log(response);
++    let key = 0;
+     return (
+       <div>
+         <Accordion>
+@@ -16,25 +17,27 @@ export class NewTestCaseComponent extends Component {
+             ? Object.keys(response.paths).map((e, i) => {
+                 const path = response.paths;
+                 return Object.keys(path[e]).map((x, y) => {
++                  key = key + 1;
++                  console.log("Key", key);
+                   const method = path[e];
+-                  // console.log("XXXXXX", method[x]);
++                  console.log("XXXXXX", method[x]);
+                   return (
+                     <Card>
+                       <Card.Header>
+                         <Accordion.Toggle
+                           as={Button}
+                           variant="link"
+-                          eventKey="1"
++                          eventKey={key}
+                           className="testCase"
+                         >
+                           {e} :{x}
+                         </Accordion.Toggle>
+-                        <Accordion.Collapse eventKey="1">
++                        <Accordion.Collapse eventKey={key}>
+                           <Card.Body>
+                             <div>
+-                              <p>Hi this is the Second test Case</p>
+                               <SaveTestCaseComponent
+-                                parameter={method[x].parameters}
++                                parameter={JSON.stringify(method[x].parameters)}
++                                swagger={JSON.stringify(response)}
+                               ></SaveTestCaseComponent>
+                             </div>
+                           </Card.Body>
+diff --git a/src/components/SaveTestCaseComponent.jsx b/src/components/SaveTestCaseComponent.jsx
+index c18722a..5198105 100644
+--- a/src/components/SaveTestCaseComponent.jsx
++++ b/src/components/SaveTestCaseComponent.jsx
+@@ -1,19 +1,113 @@
+ import React, { Component } from "react";
++import { FormControl, Form, Button } from "react-bootstrap";
++import { element } from "prop-types";
+ 
+ export class SaveTestCaseComponent extends Component {
+-  state = {};
++  state = {
++    request: {}
++  };
+   render() {
+-    const parameters = this.props.parameters;
+-    console.log(parameters);
+-    return <h1>Parameter : {parameters}</h1>;
++    const parameter = this.props.parameter
++      ? JSON.parse(this.props.parameter)
++      : null;
++    const formParam = this.getFirstDocument(parameter)[0];
++    const request = this.getFirstDocument(parameter)[1];
++    // return <h1>Sally Singh</h1>;
++    return (
++      <Form>
++        {formParam.map(element => {
++          return (
++            <FormControl
++              id={element}
++              placeholder={element}
++              className="ramltextbox"
++            />
++          );
++        })}
++        <Button onClick={this.sendData}>Save</Button>
++      </Form>
++    );
++  }
++  sendData = () => {
++    console.log("Button Clicked");
++  };
++  getFirstDocument(parameters) {
++    var req = "{";
++    let array = [];
++    let doc;
++    if (parameters) {
++      Object.keys(parameters[0]).map((e, i) => {
++        // console.log("E", e);
++        if (e === "schema") {
++          const schema = parameters[0].schema;
++          //   console.log("Schema", schema);
++          const ref = parameters[0].schema.$ref;
++          //   console.log("ref", ref);
++          var array = ref.split("/");
++          //   console.log("Final", array[array.length - 1]);
++          doc = array[array.length - 1];
++        }
++      });
++    }
++    // console.log("doc", doc);
++    if (!doc) {
++      req = req + "Something" + '":';
++      array.push("Something");
++    } else {
++      console.log("This Request", req);
++      array = array.concat(this.recursiveFunction(doc, req)[0]);
++      req = this.recursiveFunction(doc, req)[1];
++    }
++    console.log("Array", array);
++    console.log("Request Created", req.slice(0, -1) + "}");
++    let res = [];
++    if (array.length != 0) res.push(array);
++    res.push(req);
++    return res;
++  }
++  recursiveFunction(document, req) {
++    // console.log("In the recursion.......");
++    let array = [];
++    const response = JSON.parse(this.props.swagger);
++    Object.keys(response.definitions).forEach(element => {
++      //   console.log("Current Elemnt", element);
++      if (element == document) {
++        // console.log("Matches");
++        const properties = response.definitions[element].properties;
++        // console.log("Properties", response.definitions[element].properties);
++        if (properties) {
++          Object.keys(properties).forEach(element => {
++            console.log("Request Being Created", req);
++
++            console.log("Property Elements", element);
++            const prop = properties[element];
++            if (prop.$ref) {
++              req = req + '"' + element + '":{';
++              let ref = prop.$ref;
++              let refArray = ref.split("/");
++              //   console.log("NextDocument", refArray[array.length - 1]);
++              let doc = refArray[refArray.length - 1];
++              //   array.push(doc + "Recursion");
++              let result = [];
++              result = this.recursiveFunction(doc, req);
++              array = array.concat(result[0]);
++              //   array = array.concat(this.recursiveFunction(doc, req)[0]);
++              req = result[1].slice(0, -1) + "},";
++              console.log("After author------------------------", req);
++            } else {
++              req = req + '"' + element + '":"",';
++
++              array.push(element);
++            }
++          });
++        }
++      }
++    });
++    // console.log("Request Created:", req);
++    // console.log("Hellllllllooooo", array);
++    let res = [];
++    if (array.length != 0) res.push(array);
++    res.push(req);
++    return res;
+   }
+ }
+-// export function SaveTestCaseComponent() {
+-//   const parameters = props.parameters;
+-//   return (
+-//     <div>
+-//       <h1>Sally123</h1>
+-//       {parameters}
+-//     </div>parameter={method[x].parameters}
+-//   );
+-// }
+diff --git a/src/some.json b/src/some.json
+new file mode 100644
+index 0000000..d118553
+--- /dev/null
++++ b/src/some.json
+@@ -0,0 +1,226 @@
++{
++  "swagger": "2.0",
++  "info": {
++    "description": "Demo",
++    "version": "v1",
++    "title": "Demo-Application"
++  },
++  "host": "localhost:8080",
++  "tags": [
++    {
++      "name": "Controller",
++      "description": "REST Apis related to Book inventory!!!!"
++    }
++  ],
++  "schemes": ["https"],
++  "paths": {
++    "/Books/addBook": {
++      "post": {
++        "tags": ["Controller"],
++        "summary": "Add a book",
++        "description": "",
++        "operationId": "addBook",
++        "consumes": ["application/json"],
++        "produces": ["application/json"],
++        "parameters": [
++          {
++            "in": "body",
++            "name": "body",
++            "required": false,
++            "schema": {
++              "$ref": "#/definitions/AddBookRequestDocument"
++            }
++          },
++          {
++            "in": "body",
++            "name": "Name",
++            "required": false,
++            "schema": {
++              "$ref": "#/definitions/AddBookRequestDocument"
++            }
++          },
++          {
++            "in": "body",
++            "name": "Age",
++            "required": false,
++            "schema": {
++              "$ref": "#/definitions/AddBookRequestDocument"
++            }
++          }
++        ],
++        "responses": {
++          "200": {
++            "description": "Suceess|OK",
++            "schema": {
++              "$ref": "#/definitions/AddBookResponseDocument"
++            }
++          },
++          "401": {
++            "description": "not authorized!"
++          },
++          "403": {
++            "description": "forbidden!!!"
++          },
++          "404": {
++            "description": "not found!!!"
++          }
++        }
++      }
++    },
++    "/Books/deleteBook/{id}": {
++      "delete": {
++        "tags": ["Controller"],
++        "summary": "Delete a book",
++        "description": "",
++        "operationId": "deleteBook",
++        "consumes": ["application/json"],
++        "produces": ["application/json"],
++        "parameters": [
++          {
++            "name": "",
++            "in": "query",
++            "required": true,
++            "type": "string"
++          }
++        ],
++        "responses": {
++          "200": {
++            "description": "Suceess|OK",
++            "schema": {
++              "type": "string"
++            }
++          },
++          "401": {
++            "description": "not authorized!"
++          },
++          "403": {
++            "description": "forbidden!!!"
++          },
++          "404": {
++            "description": "not found!!!"
++          }
++        }
++      }
++    },
++    "/Books/getBook": {
++      "get": {
++        "tags": ["Controller"],
++        "summary": "Get a book",
++        "description": "",
++        "operationId": "getBook",
++        "consumes": ["application/json"],
++        "produces": ["application/json"],
++        "parameters": [
++          {
++            "name": "",
++            "in": "query",
++            "required": true,
++            "type": "string"
++          }
++        ],
++        "responses": {
++          "200": {
++            "description": "Suceess|OK",
++            "schema": {
++              "$ref": "#/definitions/GetBookResponseDocument"
++            }
++          },
++          "401": {
++            "description": "not authorized!"
++          },
++          "403": {
++            "description": "forbidden!!!"
++          },
++          "404": {
++            "description": "not found!!!"
++          }
++        }
++      }
++    },
++    "/Books/updateBook": {
++      "patch": {
++        "tags": ["Controller"],
++        "summary": "Update book details",
++        "description": "",
++        "operationId": "UpdateBookData",
++        "consumes": ["application/json"],
++        "produces": ["application/json"],
++        "responses": {
++          "200": {
++            "description": "Suceess|OK",
++            "schema": {
++              "$ref": "#/definitions/UpdateBookResponseDocument"
++            }
++          },
++          "401": {
++            "description": "not authorized!"
++          },
++          "403": {
++            "description": "forbidden!!!"
++          },
++          "404": {
++            "description": "not found!!!"
++          }
++        }
++      }
++    }
++  },
++  "definitions": {
++    "AddBookRequestDocument": {
++      "type": "object",
++      "required": ["book"],
++      "properties": {
++        "book": {
++          "$ref": "#/definitions/Book"
++        }
++      }
++    },
++    "AddBookResponseDocument": {
++      "type": "object",
++      "required": ["bookName"],
++      "properties": {
++        "bookId": {
++          "type": "string"
++        },
++        "bookName": {
++          "type": "string"
++        },
++        "addingDate": {
++          "type": "integer",
++          "format": "int64"
++        },
++        "result": {
++          "type": "boolean"
++        }
++      }
++    },
++    "Book": {
++      "type": "object",
++      "required": ["name"],
++      "properties": {
++        "name": {
++          "type": "number",
++          "description": "test name"
++        }
++      }
++    },
++    "GetBookResponseDocument": {
++      "type": "object",
++      "required": ["bookId", "bookName"],
++      "properties": {
++        "bookId": {
++          "type": "string"
++        },
++        "bookName": {
++          "type": "string"
++        },
++        "author": {
++          "type": "string"
++        }
++      }
++    },
++    "UpdateBookResponseDocument": {
++      "type": "object"
++    }
++  }
++}
+-- 
+2.23.0.windows.1
+
